@@ -77,6 +77,9 @@ cdef class Request:
 		self.code = res_bin.read_int()
 		self.message = res_bin.read_string()
 		cdef str template = res_bin.read_string()
+		if template is None:
+			return []
+		
 		return res_bin.read_template(template.encode('utf-8'))
 	
 	def __dealloc__(self):

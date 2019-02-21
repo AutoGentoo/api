@@ -146,10 +146,8 @@ cdef class Binary:
 	cdef str read_string (self):
 		if not self.inside():
 			return None
-		
 		cdef char* out = <char*>(<void*>self.ptr + self.pos)
 		self.pos += strlen (out) + 1
-		
 		return out.decode("utf-8")
 	
 	cdef int read_int (self):
