@@ -2,31 +2,25 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 from Cython.Compiler import Options
+from Cython.Distutils import build_ext
 
 ex = [
-#	"log",
-#	"op_string",
-#	"op_socket",
-	"cython_vector",
-	"cython_dynamic_binary",
+	"vector",
+	"dynamic_binary",
 	"d_malloc",
 	"request",
-#	"crypt",
-#	"bignum"
-#	"worker",
-#	"job"
 ]
+
+extensions = [
+	Extension("autogentoo.%s" % x, ["autogentoo/%s.pyx" % x], extra_link_args=["-lautogentoo", "-lhacksaw", "-lssl"]) for x in ex]
 
 Options.language_level = "3"
 
-extensions = []
-for x in ex:
-	extensions.append(Extension(
-		'%s' % x, ["%s.pyx" % x],
-		include_dirs=["../../include/"],
-		extra_link_args=["-L../../cmake-build-debug/", "-l:libautogentoo.so", "-L../../hacksaw/src", "-l:libhacksaw.a"],
-	))
-
 setup(
-	ext_modules=cythonize(extensions)
+	name="autogentoo",
+	version="2.01",
+	ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}, build_dir="build"),
+	cmdclass={'build_ext': build_ext},
+	include_dirs=["."],
+	#ext_package="autogentoo"
 )

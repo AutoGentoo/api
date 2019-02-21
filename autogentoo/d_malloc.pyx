@@ -1,9 +1,9 @@
 from libc.stdio cimport printf, fflush, stdout
 from libc.string cimport strlen, strdup, memcpy
 from libc.stdlib cimport free
-from d_malloc cimport DynamicBuffer
-from cython_dynamic_binary cimport *
-from cython_vector cimport CVector
+from .d_malloc cimport DynamicBuffer
+from .dynamic_binary cimport *
+from .vector cimport CVector
 
 cdef extern from "<autogentoo/endian_convert.h>":
 	int ntohl (int)
@@ -22,13 +22,13 @@ cdef class DynamicBuffer:
 			self.append_string(start)
 	
 	cdef void append_string (self, char* ptr):
-		self.append_item('s', ptr)
+		self.append_item("i", ptr)
 	
 	cdef void append_int (self, int k):
-		self.append_item ('i', &k)
+		self.append_item ("i", &k)
 	
-	cdef void append_item (self, char _type, void* data):
-		dynamic_binary_add(self.parent, _type, data)
+	cdef void append_item (self, str _type, void* data):
+		dynamic_binary_add(self.parent, _type.encode("utf-8")[0], data)
 	
 	cpdef append(self, py_template, array):
 		if len(array) == 0:
@@ -119,12 +119,14 @@ cdef class DynamicBuffer:
 	
 	cpdef void print_raw (self, align=25):
 		cdef int last_i = 1
-		for i in range (self.get_size()):
+		print(self.get_size())
+		for i in range (self.parent.used_size):
 			printf ("%02x ", (<char*>self.parent.ptr)[i] & 0xff)
 			if last_i % 25 == 0 and align:
 				printf ("\n")
 			last_i += 1
 		fflush (stdout)
+		printf("\n")
 
 cdef class Binary:
 	def __init__ (self, DynamicBuffer buffer, is_network=True):
@@ -141,14 +143,14 @@ cdef class Binary:
 		self.ptr = ptr
 		self.size = size
 	
-	cdef char* read_string (self):
+	cdef str read_string (self):
 		if not self.inside():
-			return NULL
+			return None
 		
 		cdef char* out = <char*>(<void*>self.ptr + self.pos)
 		self.pos += strlen (out) + 1
 		
-		return strdup (out)
+		return out.decode("utf-8")
 	
 	cdef int read_int (self):
 		if not self.inside(sizeof (int)):
@@ -160,6 +162,17 @@ cdef class Binary:
 		if not self.is_network_endian:
 			return out
 		return ntohl(out)
+	
+	cdef str get_array_template(self, template_start):
+		end = 0
+		level = 1
+		for i in range(len(template_start)):
+			if template_start[i] == ')':
+				level -= 1
+			if level == 0:
+				end = i
+				break
+		return template_start[:end]
 	
 	cdef skip_until (self, to_find):
 		if sizeof(to_find) == 1:
@@ -203,15 +216,33 @@ cdef class Binary:
 	
 	cpdef read_template (self, char* template):
 		out = []
-		cdef char* i = template
-		while i != NULL:
-			if i[0] == 'i':
+		
+		i = 0
+		while i < strlen(template):
+			if template[i] == b'i':
 				out.append (self.read_int())
-			elif i[0] == 's':
+			elif template[i] == b's':
 				out.append (self.read_string())
-			
+			elif template[i] == b'a':
+				i += 1 # skip over the open paren
+				array_len = self.read_int()
+				array_template = strdup(self.get_array_template(str(template)[i+3:]).encode('utf-8'))
+				for j in range (array_len):
+					out.append(self.read_template(array_template))
+				i += array_len
+				free(array_template)
 			i += 1
 		return out
+	
+	cpdef void print_raw (self, align=25):
+		cdef int last_i = 1
+		for i in range (self.size):
+			printf ("%02x ", (<char*>self.ptr)[i] & 0xff)
+			if last_i % 25 == 0 and align:
+				printf ("\n")
+			last_i += 1
+		fflush (stdout)
+		printf("\n")
 	
 	def __dealloc__(self):
 		if self.buffer is None:

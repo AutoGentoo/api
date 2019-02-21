@@ -1,4 +1,4 @@
-from cython_vector cimport *
+from .vector cimport *
 
 cdef class CVector:
 	def __init__(self, element_size, keep=True, ordered=True):

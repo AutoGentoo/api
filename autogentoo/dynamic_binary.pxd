@@ -1,5 +1,4 @@
 cdef extern from "<autogentoo/api/dynamic_binary.h>":
-	
 	cdef:
 		ctypedef enum dynamic_bin_t:
 			DYNAMIC_BIN_OK,

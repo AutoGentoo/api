@@ -1,6 +1,5 @@
-from cython_dynamic_binary cimport DynamicType
-from d_malloc cimport DynamicBuffer
-from collections import namedtuple
+from .dynamic_binary cimport DynamicType
+from .d_malloc cimport DynamicBuffer
 
 cdef extern from "<autogentoo/request_structure.h>":
 	ctypedef enum request_structure_t:
@@ -62,7 +61,7 @@ cdef extern from "<autogentoo/api/ssl_wrap.h>":
 			unsigned short port;
 			int socket;
 		
-		SSocket* ssocket_new(char* server_hostname, unsigned short port);
+		int ssocket_new(SSocket** sock, char* server_hostname, unsigned short port);
 		void ssocket_free(SSocket* ptr);
 		void autogentoo_client_ssl_init();
 		void ssocket_request(SSocket* ptr, ClientRequest* request);
@@ -81,21 +80,13 @@ cdef extern from "<autogentoo/user.h>":
 		TOKEN_HOST_MOD = TOKEN_HOST_WRITE | 1 << 6, # //!< Can delete host
 		TOKEN_SERVER_SUPER = 0xFF, # //!< All permissions
 
-cdef char** request_structure_linkage = [
-	"sss",# /* Host new */
-	"s", # /* Host select */
-	"iss", # /* Host edit */
-	"ss", # /* Host authorize */
-	"s", # /* Emerge arguments */
-	"ssi", # /* Issue Token */
-]
-
 cdef class Request:
 	cdef SSocket* socket
 	cdef DynamicBuffer request
 	
 	cdef int code
-	cdef char* message
+	cdef str message
+	cdef error
 	
 	cpdef size_t send(self)
 	cpdef list recv(self)
@@ -104,38 +95,16 @@ cdef class Address:
 	cdef char* ip
 	cdef int port
 
-RequestStruct = namedtuple('RequestStruct', 'struct_type args')
-Response = namedtuple('Response', 'code message content')
-
-request_args = {
-	REQ_HOST_NEW: [STRCT_AUTHORIZE, STRCT_HOST_NEW],
-	REQ_HOST_EDIT: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_HOST_EDIT],
-	REQ_HOST_DEL: [STRCT_AUTHORIZE, STRCT_HOST_SELECT],
-	REQ_HOST_EMERGE: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_EMERGE],
-	REQ_HOST_MNTCHROOT: [STRCT_AUTHORIZE, STRCT_HOST_SELECT],
-	REQ_SRV_INFO: [],
-	REQ_AUTH_ISSUE_TOK: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_ISSUE_TOK],
-	REQ_AUTH_REFRESH_TOK: [STRCT_AUTHORIZE]
-}
-
-# Generates requests and parses responses
-cdef class RequestStructs:
-	@staticmethod
-	cdef host_new(char* arch, char* profile, char* hostname)
-	# request_type 1: make_conf 2: general
-	@staticmethod
-	cdef host_edit(int request_type, char* make_conf_var, char* make_conf_val)
-	@staticmethod
-	cdef host_select(char* hostname)
-	@staticmethod
-	cdef authorize(char* user_id, char* token)
-	@staticmethod
-	cdef emerge(char* emerge)
-	@staticmethod
-	cdef issue_token(char* user_id, char* target_host, token_access_t access_level)
-
 cdef class Client:
 	cdef Address adr
 	
-	cpdef request(self, request_t code, args)
+	cpdef request(self, str str_code, args)
 	cdef verify_request(self, request_t code, args)
+
+cpdef host_new(str arch, str profile, str hostname)
+# request_type 1: make_conf 2: general
+cpdef host_edit(int request_type, str make_conf_var, str make_conf_val)
+cpdef host_select(str hostname)
+cpdef authorize(str user_id, str token)
+cpdef emerge(str emerge)
+cpdef issue_token(str user_id, str target_host, token_access_t access_level)
