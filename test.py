@@ -9,7 +9,7 @@ print(client.request("REQ_HOST_NEW", [
 	host_new("amd64", "profile", "test host")
 ]))
 
-#print(client.request("REQ_SRV_INFO", []))
+print(client.request("REQ_SRV_INFO", []))
 
 """
 while True:
