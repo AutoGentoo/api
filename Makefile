@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 all:
-	python setup.py build_ext --inplace
+	python setup.py build_ext
 
 clean:
 	rm -rf build
