@@ -12,12 +12,12 @@ ex = [
 ]
 
 extensions = [
-	Extension("autogentoo.%s" % x, ["autogentoo/%s.pyx" % x], extra_link_args=["-lautogentoo", "-lhacksaw", "-lssl"]) for x in ex]
+	Extension("autogentoo_api.%s" % x, ["autogentoo_api/%s.pyx" % x], extra_link_args=["-lautogentoo", "-lhacksaw", "-lssl"]) for x in ex]
 
 Options.language_level = "3"
 
 setup(
-	name="autogentoo",
+	name="autogentoo_api",
 	version="2.01",
 	ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}, build_dir="build"),
 	cmdclass={'build_ext': build_ext},

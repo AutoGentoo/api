@@ -4,10 +4,19 @@ from autogentoo.request import *
 # k.append("ssisa(is)", ["hello", "world", 2, "goodbye", [(2, "ds"), (3, "dd"), (1, "36")]])
 
 client = Client(Address(ip="localhost", port="9491"))
-print(client.request("REQ_HOST_NEW", [
-	authorize("kronos", "adakjaskdkkda"),
-	host_new("amd64", "profile", "test host")
-]))
+
+#username = input("username: ")
+#token = input("token: ")
+username = "autogentoo.org"
+token = "VocamaHyvCecZHtLEzW0l4pN8MRSODlj"
+
+
+print(client.request("REQ_SRV_REFRESH", [authorize(username, token)]))
+
+#print(client.request("REQ_HOST_NEW", [
+#	authorize("kronos", ""),
+#	host_new("amd64", "profile", "test host")
+#]))
 
 print(client.request("REQ_SRV_INFO", []))
 

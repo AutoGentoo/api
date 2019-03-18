@@ -7,12 +7,14 @@ from collections import namedtuple
 req_bindings = {
 	"REQ_HOST_NEW": <int>REQ_HOST_NEW,
 	"REQ_HOST_EDIT": <int>REQ_HOST_EDIT,
-	"REQ_HOST_DEL": <int>REQ_HOST_DEL,
+ 	"REQ_HOST_DEL": <int>REQ_HOST_DEL,
 	"REQ_HOST_EMERGE": <int>REQ_HOST_EMERGE,
 	"REQ_HOST_MNTCHROOT": <int>REQ_HOST_MNTCHROOT,
 	"REQ_SRV_INFO": <int>REQ_SRV_INFO,
+	"REQ_SRV_REFRESH": <int>REQ_SRV_REFRESH,
 	"REQ_AUTH_ISSUE_TOK": <int>REQ_AUTH_ISSUE_TOK,
-	"REQ_AUTH_REFRESH_TOK": <int>REQ_AUTH_REFRESH_TOK
+	"REQ_AUTH_REFRESH_TOK": <int>REQ_AUTH_REFRESH_TOK,
+	"REQ_AUTH_REGISTER": <int>REQ_AUTH_REGISTER,
 }
 
 request_args = {
@@ -22,8 +24,10 @@ request_args = {
 	REQ_HOST_EMERGE: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_EMERGE],
 	REQ_HOST_MNTCHROOT: [STRCT_AUTHORIZE, STRCT_HOST_SELECT],
 	REQ_SRV_INFO: [],
+	REQ_SRV_REFRESH: [STRCT_AUTHORIZE],
 	REQ_AUTH_ISSUE_TOK: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_ISSUE_TOK],
-	REQ_AUTH_REFRESH_TOK: [STRCT_AUTHORIZE]
+	REQ_AUTH_REFRESH_TOK: [STRCT_AUTHORIZE],
+	REQ_AUTH_REGISTER: [STRCT_AUTHORIZE, STRCT_ISSUE_TOK]
 }
 
 request_structure_linkage = [
@@ -87,18 +91,18 @@ cdef class Request:
 			ssocket_free(self.socket)
 
 cpdef host_new(str arch, str profile, str hostname):
-	return RequestStruct(struct_type=STRCT_HOST_NEW, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_HOST_NEW, args=(arch, profile, hostname))
 # request_type 1: make_conf 2: general
 cpdef host_edit(int request_type, str make_conf_var, str make_conf_val):
-	return RequestStruct(struct_type=STRCT_HOST_EDIT, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_HOST_EDIT, args=(request_type, make_conf_var))
 cpdef host_select(str hostname):
-	return RequestStruct(struct_type=STRCT_HOST_SELECT, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_HOST_SELECT, args=(hostname))
 cpdef authorize(str user_id, str token):
-	return RequestStruct(struct_type=STRCT_AUTHORIZE, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_AUTHORIZE, args=(user_id, token))
 cpdef emerge(str emerge):
-	return RequestStruct(struct_type=STRCT_EMERGE, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_EMERGE, args=(emerge))
 cpdef issue_token(str user_id, str target_host, token_access_t access_level):
-	return RequestStruct(struct_type=STRCT_ISSUE_TOK, args=list(locals().values()))
+	return RequestStruct(struct_type=STRCT_ISSUE_TOK, args=(user_id, target_host, access_level))
 
 cdef class Client:
 	def __init__(self, Address adr):
