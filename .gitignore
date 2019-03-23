@@ -1,3 +1,4 @@
 venv/*
 build/*
 autogentoo_api/*.so
+autogentoo_api/__pycache__/*

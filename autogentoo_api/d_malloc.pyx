@@ -22,7 +22,7 @@ cdef class DynamicBuffer:
 			self.append_string(start)
 	
 	cdef void append_string (self, char* ptr):
-		self.append_item("i", ptr)
+		self.append_item("s", ptr)
 	
 	cdef void append_int (self, int k):
 		self.append_item ("i", &k)
@@ -163,14 +163,16 @@ cdef class Binary:
 	
 	cdef str get_array_template(self, template_start):
 		end = 0
-		level = 1
+		level = 0
 		for i in range(len(template_start)):
-			if template_start[i] == ')':
+			if template_start[i] == '(':
+				level += 1
+			elif template_start[i] == ')':
 				level -= 1
 			if level == 0:
 				end = i
 				break
-		return template_start[:end]
+		return template_start[1:end]
 	
 	cdef skip_until (self, to_find):
 		if sizeof(to_find) == 1:
@@ -224,12 +226,15 @@ cdef class Binary:
 			elif template[i] == b'a':
 				i += 1 # skip over the open paren
 				array_len = self.read_int()
-				array_template = strdup(self.get_array_template(str(template)[i+3:]).encode('utf-8'))
+				array_template = self.get_array_template(template[i:].decode("utf-8"))
+				temp_arr = []
 				for j in range (array_len):
-					out.append(self.read_template(array_template))
+					temp_arr.append(self.read_template(array_template.encode("utf-8")))
+				out.append(temp_arr)
 				i += array_len
-				free(array_template)
 			i += 1
+		if template[0] == 'a':
+			out = out[0]
 		return out
 	
 	cpdef void print_raw (self, align=25):

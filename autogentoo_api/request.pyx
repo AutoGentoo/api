@@ -81,6 +81,7 @@ cdef class Request:
 		self.code = res_bin.read_int()
 		self.message = res_bin.read_string()
 		cdef str template = res_bin.read_string()
+		
 		if template is None:
 			return []
 		
@@ -96,11 +97,11 @@ cpdef host_new(str arch, str profile, str hostname):
 cpdef host_edit(int request_type, str make_conf_var, str make_conf_val):
 	return RequestStruct(struct_type=STRCT_HOST_EDIT, args=(request_type, make_conf_var))
 cpdef host_select(str hostname):
-	return RequestStruct(struct_type=STRCT_HOST_SELECT, args=(hostname))
+	return RequestStruct(struct_type=STRCT_HOST_SELECT, args=[hostname])
 cpdef authorize(str user_id, str token):
 	return RequestStruct(struct_type=STRCT_AUTHORIZE, args=(user_id, token))
 cpdef emerge(str emerge):
-	return RequestStruct(struct_type=STRCT_EMERGE, args=(emerge))
+	return RequestStruct(struct_type=STRCT_EMERGE, args=[emerge])
 cpdef issue_token(str user_id, str target_host, token_access_t access_level):
 	return RequestStruct(struct_type=STRCT_ISSUE_TOK, args=(user_id, target_host, access_level))
 
