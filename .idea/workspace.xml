@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="9cd9742e-665d-468d-b779-abb53e095370" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/autogentoo_api/d_malloc.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/autogentoo_api/d_malloc.pyx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/autogentoo_api/request.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/autogentoo_api/request.pyx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -143,7 +140,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="960" />
     <option name="y" value="32" />
     <option name="width" value="960" />
@@ -176,7 +173,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../autogentoo.org/autogentoo" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="settings.editor.selected.configurable" value="preferences.fileTypes" />
@@ -269,16 +266,17 @@
       <workItem from="1552660769211" duration="840000" />
       <workItem from="1553211330643" duration="3280000" />
       <workItem from="1553264966268" duration="824000" />
+      <workItem from="1553345149890" duration="36000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="71249000" />
+    <option name="totallyTimeSpent" value="71285000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="32" width="1920" height="951" extended-state="7" />
+    <frame x="0" y="32" width="1920" height="951" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22545847" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.22923408" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />

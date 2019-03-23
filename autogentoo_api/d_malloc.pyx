@@ -233,8 +233,6 @@ cdef class Binary:
 				out.append(temp_arr)
 				i += array_len
 			i += 1
-		if template[0] == 'a':
-			out = out[0]
 		return out
 	
 	cpdef void print_raw (self, align=25):
