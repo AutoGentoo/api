@@ -8,7 +8,7 @@ client = Client(Address(ip="localhost", port="9491"))
 # username = input("username: ")
 # token = input("token: ")
 username = "autogentoo.org"
-token = "SsNFX7wF9wnW9GOskKCcs2Cupgo9QZ1i"
+token = "hP6Q5vNmyCvhBr48hqb9ZQKkhn9LaLF5"
 
 
 print(client.request("REQ_SRV_REFRESH", [authorize(username, token)]))

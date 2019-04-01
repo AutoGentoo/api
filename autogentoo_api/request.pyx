@@ -52,41 +52,41 @@ cdef class Request:
 			self.request.append_int(strct.struct_type)
 			self.request.append(str(request_structure_linkage[strct.struct_type - 1]), strct.args)
 		self.request.append_int(STRCT_END)
-		
+
 		self.error = False
 		cdef int con = ssocket_new (&self.socket, adr.ip, adr.port);
 		if con != 0:
 			self.error = True
-		
+
 		self.code = -1
 		self.message = None
-	
+
 	cpdef size_t send(self):
 		cdef ClientRequest request;
 		request.ptr = self.request.parent.ptr
 		request.size = self.request.get_size()
 		ssocket_request(self.socket, &request)
-	
+
 	cpdef list recv(self):
 		cdef void* response_ptr
 		cdef size_t response_size
-		
+
 		response_size = <size_t>ssocket_read_response(self.socket, &response_ptr)
 		if response_size <= 0:
 			raise ConnectionError("Failed to read response from server")
-		
+
 		cdef Binary res_bin = Binary(None)
 		res_bin.set_ptr(response_ptr, response_size)
-		
+
 		self.code = res_bin.read_int()
 		self.message = res_bin.read_string()
 		cdef str template = res_bin.read_string()
-		
+
 		if template is None:
 			return []
-		
+
 		return res_bin.read_template(template.encode('utf-8'))
-	
+
 	def __dealloc__(self):
 		if not self.error:
 			ssocket_free(self.socket)
@@ -109,21 +109,21 @@ cdef class Client:
 	def __init__(self, Address adr):
 		autogentoo_client_ssl_init()
 		self.adr = adr
-	
+
 	cpdef request(self, str str_code, args):
 		cdef request_t code = <request_t>req_bindings[str_code]
-		
+
 		self.verify_request(code, args)
 		cdef Request req = Request(self.adr, code, args)
 		if req.error:
 			return None
-		
+
 		req.send()
 		content = req.recv()
 		res = Response(code=req.code, message=req.message, content=content)
-		
+
 		return res
-	
+
 	cdef verify_request(self, request_t code, args):
 		for strct in args:
 			if type(strct) != RequestStruct:
@@ -136,6 +136,6 @@ cdef class Address:
 	def __init__(self, ip, port):
 		self.ip = strdup(ip.encode("utf-8"))
 		self.port = int(port)
-	
+
 	def __dealloc__(self):
 		free(self.ip)
