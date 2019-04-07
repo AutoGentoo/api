@@ -76,12 +76,10 @@ cdef class Request:
 		request.ptr = self.request.parent.ptr
 		request.size = self.request.get_size()
 		cdef int out_size;
-		printf("before send\n")
 		if self.ssl:
 			ssocket_request(self.secure_socket, &request)
 		else:
 			socket_request(self.raw_socket, &request)
-		printf("after send\n")
 
 	cpdef list recv(self):
 		cdef void* response_ptr
