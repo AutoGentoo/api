@@ -48,6 +48,7 @@ cdef extern from "<autogentoo/api/ssl_stream.h>":
 		void smw_server_free(SMWServer* server);
 		SMWConnection* smw_server_connect(SMWServer* server, int fd);
 		SMWPool* smw_fork(SMWServer* server, int accepted_sock);
+		void smw_server_loop(SMWServer* server);
 		void smw_stream(SMWConnection* conn);
 
 cdef char* django_handle_c(char* server_id)
@@ -57,3 +58,4 @@ cdef class MiddlewareServer:
 	cdef django_handler
 	
 	cpdef start(self)
+	cpdef loop(self)

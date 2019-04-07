@@ -1,4 +1,6 @@
 venv/*
 build/*
 autogentoo_api/*.so
+autogentoo_api/*.c
 autogentoo_api/__pycache__/*
+smw.*

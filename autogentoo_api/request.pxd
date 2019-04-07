@@ -67,8 +67,10 @@ cdef extern from "<autogentoo/api/ssl_wrap.h>":
 		void ssocket_free(SSocket* ptr);
 		void autogentoo_client_ssl_init();
 		void ssocket_request(SSocket* ptr, ClientRequest* request);
-		ssize_t ssocket_read_response(SSocket* sock, void** dest);
-		ssize_t ssocket_read(SSocket* ptr, void* dest, size_t n);
+		void socket_request(int sock, ClientRequest* request);
+		int ssocket_read(SSocket* ptr, void* dest);
+		int socket_read(int ptr, void* dest);
+		int prv_ssocket_connect(char* hostname, unsigned short port); # Not actually in the header (private)
 
 cdef extern from "<autogentoo/user.h>":
 	ctypedef enum token_access_t:
@@ -83,8 +85,10 @@ cdef extern from "<autogentoo/user.h>":
 		TOKEN_SERVER_SUPER = 0xFF, # //!< All permissions
 
 cdef class Request:
-	cdef SSocket* socket
+	cdef SSocket* secure_socket
+	cdef int raw_socket
 	cdef DynamicBuffer request
+	cdef ssl
 	
 	cdef int code
 	cdef str message

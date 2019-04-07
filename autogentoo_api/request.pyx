@@ -1,4 +1,6 @@
 from .request cimport *
+from posix.unistd cimport close
+from libc.stdio cimport printf
 from libc.stdlib cimport free
 from libc.string cimport strdup, memset
 from .d_malloc cimport Binary
@@ -43,9 +45,10 @@ cpdef RequestStruct = namedtuple('RequestStruct', 'struct_type args')
 cpdef Response = namedtuple('Response', 'code message content')
 
 cdef class Request:
-	def __init__(self, Address adr, request_t req_code, list args):
+	def __init__(self, Address adr, request_t req_code, list args, ssl=True):
 		self.request = DynamicBuffer(to_network=True) # To big endian
 		self.request.parent.used_size += 1
+		self.ssl = ssl
 		memset(self.request.parent.ptr, 0, 1)
 		self.request.append_int(<int>req_code)
 		for strct in args:
@@ -54,10 +57,17 @@ cdef class Request:
 		self.request.append_int(STRCT_END)
 
 		self.error = False
-		cdef int con = ssocket_new (&self.socket, adr.ip, adr.port);
+		
+		cdef int con;
+		if self.ssl:
+			con = ssocket_new (&self.secure_socket, adr.ip, adr.port);
+		else:
+			self.raw_socket = prv_ssocket_connect(adr.ip, adr.port)
+			if self.raw_socket == -1:
+				con = 1
+		
 		if con != 0:
 			self.error = True
-
 		self.code = -1
 		self.message = None
 
@@ -65,13 +75,22 @@ cdef class Request:
 		cdef ClientRequest request;
 		request.ptr = self.request.parent.ptr
 		request.size = self.request.get_size()
-		ssocket_request(self.socket, &request)
+		cdef int out_size;
+		printf("before send\n")
+		if self.ssl:
+			ssocket_request(self.secure_socket, &request)
+		else:
+			socket_request(self.raw_socket, &request)
+		printf("after send\n")
 
 	cpdef list recv(self):
 		cdef void* response_ptr
-		cdef size_t response_size
-
-		response_size = <size_t>ssocket_read_response(self.socket, &response_ptr)
+		cdef int response_size
+		
+		if self.ssl:
+			response_size = <size_t>ssocket_read(self.secure_socket, &response_ptr)
+		else:
+			response_size = <size_t>socket_read(self.raw_socket, &response_ptr)
 		if response_size <= 0:
 			raise ConnectionError("Failed to read response from server")
 
@@ -89,7 +108,10 @@ cdef class Request:
 
 	def __dealloc__(self):
 		if not self.error:
-			ssocket_free(self.socket)
+			if self.ssl:
+				ssocket_free(self.secure_socket)
+			else:
+				close (self.raw_socket)
 
 cpdef host_new(str arch, str profile, str hostname):
 	return RequestStruct(struct_type=STRCT_HOST_NEW, args=(arch, profile, hostname))
