@@ -1,8 +1,7 @@
 from .request cimport *
-from posix.unistd cimport close
-from libc.stdio cimport printf
+from posix.unistd cimport close, write, read
 from libc.stdlib cimport free
-from libc.string cimport strdup, memset
+from libc.string cimport strdup, memset, strncpy
 from .d_malloc cimport Binary
 from collections import namedtuple
 
@@ -44,11 +43,89 @@ request_structure_linkage = [
 cpdef RequestStruct = namedtuple('RequestStruct', 'struct_type args')
 cpdef Response = namedtuple('Response', 'code message content')
 
+cdef class Socket:
+	def __init__(self, Address adr, ssl=True):
+		self.adr = adr
+		self.ssl = ssl
+		
+		cdef __typ_sockaddr_un addr
+		
+		if self.ssl:
+			con = ssocket_new (&self.secure_socket, adr.ip, adr.port)
+			if con != 0:
+				raise ConnectionError("ssocket_new() failed")
+		else:
+			if adr.unix_socket:
+				self.raw_socket = socket(AF_UNIX, SOCK_STREAM, 0)
+				if self.raw_socket < 0:
+					raise ConnectionError("socket() failed")
+				
+				memset(&addr, 0, sizeof(addr))
+				addr.sun_family = AF_UNIX
+				if len(adr.ip) == 0:
+					raise ConnectionError("No address specified")
+				else:
+					strncpy(addr.sun_path, adr.ip, sizeof(addr.sun_path)-1)
+				if connect(self.raw_socket, <sockaddr*>&addr, sizeof(addr)) == -1:
+					raise ConnectionError("Failed to connect to %s (unix)" % adr.ip)
+			else:
+				self.raw_socket = socket_connect(adr.ip, adr.port)
+				if self.raw_socket == -1:
+					raise ConnectionError("Failed to connect to %s:%s" % (adr.ip, adr.port))
+	
+	cdef c_send(self, void* buffer, int size):
+		if self.ssl:
+			SSL_write(<SSL*>self.secure_socket.ssl, buffer, size)
+		else:
+			write(self.raw_socket, buffer, size)
+	
+	cdef c_recv(self, void* buffer, int size):
+		if self.ssl:
+			SSL_read(<SSL*>self.secure_socket.ssl, buffer, size)
+		else:
+			read(self.raw_socket, buffer, size)
+	
+	cpdef request(self, DynamicBuffer request):
+		cdef ClientRequest c_request;
+		c_request.ptr = request.parent.ptr
+		c_request.size = request.get_size()
+		cdef int out_size;
+		if self.ssl:
+			ssocket_request(self.secure_socket, &c_request)
+		else:
+			socket_request(self.raw_socket, &c_request)
+	
+	cpdef raw_send(self, DynamicBuffer ptr):
+		self.c_send(ptr.get_ptr(), ptr.get_size())
+	
+	cpdef recv(self, raw=False):
+		cdef void* response_ptr
+		cdef int response_size
+		
+		if self.ssl:
+			response_size = <size_t>ssocket_read(self.secure_socket, &response_ptr, 0)
+		else:
+			response_size = <size_t>socket_read(self.raw_socket, &response_ptr, 0)
+		if response_size <= 0:
+			raise ConnectionError("Failed to read response from server")
+		if raw:
+			return PyByteArray_FromStringAndSize(<char*>response_ptr, response_size)
+		
+		cdef Binary res_bin = Binary(None)
+		res_bin.set_ptr(response_ptr, response_size)
+		return res_bin
+	
+	def __dealloc__(self):
+		if self.ssl and self.secure_socket != NULL:
+			ssocket_free(self.secure_socket)
+		else:
+			close (self.raw_socket)
+
+
 cdef class Request:
 	def __init__(self, Address adr, request_t req_code, list args, ssl=True):
 		self.request = DynamicBuffer(to_network=True) # To big endian
 		self.request.parent.used_size += 1
-		self.ssl = ssl
 		memset(self.request.parent.ptr, 0, 1)
 		self.request.append_int(<int>req_code)
 		for strct in args:
@@ -56,45 +133,16 @@ cdef class Request:
 			self.request.append(str(request_structure_linkage[strct.struct_type - 1]), strct.args)
 		self.request.append_int(STRCT_END)
 
-		self.error = False
-		
-		cdef int con;
-		if self.ssl:
-			con = ssocket_new (&self.secure_socket, adr.ip, adr.port);
-		else:
-			self.raw_socket = prv_ssocket_connect(adr.ip, adr.port)
-			if self.raw_socket == -1:
-				con = 1
-		
-		if con != 0:
-			self.error = True
+		self.sock = Socket(adr, ssl)
 		self.code = -1
 		self.message = None
 
 	cpdef size_t send(self):
-		cdef ClientRequest request;
-		request.ptr = self.request.parent.ptr
-		request.size = self.request.get_size()
-		cdef int out_size;
-		if self.ssl:
-			ssocket_request(self.secure_socket, &request)
-		else:
-			socket_request(self.raw_socket, &request)
+		self.sock.request(self.request)
 
-	cpdef list recv(self):
-		cdef void* response_ptr
-		cdef int response_size
+	cpdef list recv(self, raw=False):
+		cdef Binary res_bin = self.sock.recv()
 		
-		if self.ssl:
-			response_size = <size_t>ssocket_read(self.secure_socket, &response_ptr)
-		else:
-			response_size = <size_t>socket_read(self.raw_socket, &response_ptr)
-		if response_size <= 0:
-			raise ConnectionError("Failed to read response from server")
-
-		cdef Binary res_bin = Binary(None)
-		res_bin.set_ptr(response_ptr, response_size)
-
 		self.code = res_bin.read_int()
 		self.message = res_bin.read_string()
 		cdef str template = res_bin.read_string()
@@ -103,13 +151,6 @@ cdef class Request:
 			return []
 
 		return res_bin.read_template(template.encode('utf-8'))
-
-	def __dealloc__(self):
-		if not self.error:
-			if self.ssl:
-				ssocket_free(self.secure_socket)
-			else:
-				close (self.raw_socket)
 
 cpdef host_new(str arch, str profile, str hostname):
 	return RequestStruct(struct_type=STRCT_HOST_NEW, args=(arch, profile, hostname))
@@ -153,9 +194,10 @@ cdef class Client:
 			raise TypeError("Incorrect struct list, expected: %s" % request_args[code])
 
 cdef class Address:
-	def __init__(self, ip, port):
+	def __init__(self, ip, port=0, unix=False):
 		self.ip = strdup(ip.encode("utf-8"))
 		self.port = int(port)
+		self.unix_socket = unix
 
 	def __dealloc__(self):
 		free(self.ip)

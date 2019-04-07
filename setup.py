@@ -20,7 +20,7 @@ Options.language_level = "3"
 setup(
 	name="autogentoo_api",
 	version="2.01",
-	ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}, build_dir="build"),
+	ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}, gdb_debug=True),
 	cmdclass={'build_ext': build_ext},
 	include_dirs=["."],
 	#ext_package="autogentoo"

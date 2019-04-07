@@ -68,9 +68,9 @@ cdef extern from "<autogentoo/api/ssl_wrap.h>":
 		void autogentoo_client_ssl_init();
 		void ssocket_request(SSocket* ptr, ClientRequest* request);
 		void socket_request(int sock, ClientRequest* request);
-		int ssocket_read(SSocket* ptr, void* dest);
-		int socket_read(int ptr, void* dest);
-		int prv_ssocket_connect(char* hostname, unsigned short port); # Not actually in the header (private)
+		int ssocket_read(SSocket* ptr, void* dest, int is_server);
+		int socket_read(int ptr, void* dest, int is_server);
+		int socket_connect(char* hostname, unsigned short port); # Not actually in the header (private)
 
 cdef extern from "<autogentoo/user.h>":
 	ctypedef enum token_access_t:
@@ -84,22 +84,66 @@ cdef extern from "<autogentoo/user.h>":
 		TOKEN_HOST_MOD = TOKEN_HOST_WRITE | 1 << 6, # //!< Can delete host
 		TOKEN_SERVER_SUPER = 0xFF, # //!< All permissions
 
-cdef class Request:
+cdef extern from "<sys/un.h>":
+	ctypedef unsigned short int sa_family_t;
+	
+	cdef struct sockaddr_un:
+		sa_family_t sun_family;
+		char sun_path[108];
+
+cdef extern from "<sys/socket.h>":
+	cdef enum:
+		AF_UNIX=1
+		SOCK_STREAM = 1
+	
+	ctypedef unsigned int socklen_t;
+	cdef struct sockaddr:
+		sa_family_t sa_family;
+		char sa_path[14];
+	
+	int connect (int __fd, const sockaddr * __addr, socklen_t __len);
+	int socket (int __domain, int __type, int __protocol);
+
+cdef extern from "<openssl/ssl.h>":
+	ctypedef struct SSL:
+		pass
+	
+	int SSL_read(SSL *ssl, void *buf, int num);
+	int SSL_write(SSL *ssl, void *buf, int num);
+
+ctypedef sockaddr __typ_sockaddr
+ctypedef sockaddr_un __typ_sockaddr_un
+
+cdef extern from "<Python.h>":
+	bytearray PyByteArray_FromStringAndSize(char *string, Py_ssize_t len)
+
+cdef class Socket:
 	cdef SSocket* secure_socket
 	cdef int raw_socket
-	cdef DynamicBuffer request
 	cdef ssl
+	cdef Address adr
+	
+	cdef c_send(self, void* buffer, int size)
+	cdef c_recv(self, void* buffer, int size)
+	cpdef request(self, DynamicBuffer request)
+	cpdef raw_send(self, DynamicBuffer ptr)
+	cpdef recv(self, raw=*)
+
+cdef class Request:
+	cdef Socket sock
+	cdef DynamicBuffer request
 	
 	cdef int code
 	cdef str message
 	cdef error
 	
 	cpdef size_t send(self)
-	cpdef list recv(self)
+	cpdef list recv(self, raw=*)
 
 cdef class Address:
 	cdef char* ip
 	cdef int port
+	cdef unix_socket
 
 cdef class Client:
 	cdef Address adr

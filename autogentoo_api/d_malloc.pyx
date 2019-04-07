@@ -50,51 +50,59 @@ cdef class DynamicBuffer:
 				item = array[parent_array_index]
 				parent_array_index += 1
 			else:
-				try:
-					item = current_array[3][current_array[2]][current_array[4]]
-				except IndexError:
-					if len(current_array[3][current_array[2]]) != current_array[4]:
-						raise IndexError("Incorrect array size")
-					else:
-						item = None
+				if py_template[i] == ')':
+					item = None
+				elif current_array[2] == -1:
+					item = current_array[4][current_array[3]] # array[row]
 				else:
-					current_array[4] += 1
+					item = current_array[4][current_array[3]][current_array[2]] # array[row][col]
+					current_array[2] += 1
+			
 			if py_template[i] == 'i':
 				temp_dyn.integer = <int>item
 				to_convert.add(&temp_dyn)
 				py_pass_template += 'i'
+			
 			elif py_template[i] == 's':
 				temp_str = strdup((<str>item).encode("utf-8"))
 				to_free.add(&temp_str)
 				temp_dyn.string = temp_str
 				to_convert.add(&temp_dyn)
 				py_pass_template += 's'
+			
 			elif py_template[i] == 'v':
 				temp_dyn.binary.data = (<DynamicBuffer>item).get_ptr()
 				temp_dyn.binary.n = (<DynamicBuffer>item).get_size()
 				to_convert.add(&temp_dyn)
 				py_pass_template += 'v'
+			
 			elif py_template[i] == 'a':
-				i += 1
+				i += 1 # Skip over open paren
+				
 				parent = current_array
+				col_num = py_template[i+1:].find(")")
 				py_pass_template += 'a'
 
-				# parent, template_ptr, array_index array
-				current_array = [parent, i, 0, item, 0]
+				# parent, template_ptr, col_index row_index array
+				if col_num == 1:
+					current_array = [parent, i, -1, 0, item]
+				else:
+					current_array = [parent, i, 0, 0, item]
 			elif py_template[i] == ')':
 				if current_array is None:
 					raise RuntimeError("Too many parenthesis closes")
-				if current_array[2] + 1 >= len(current_array[3]):
+				if current_array[3] + 1 >= len(current_array[4]):
 					# End array
 					current_array = current_array[0]
 					py_pass_template += 'e'
 				else:
 					i = current_array[1] # Reset the template position
-					current_array[2] += 1
-					current_array[4] = 0
+					if current_array[2] != -1:
+						current_array[2] = 0 # Only if we actually have columns
+					current_array[3] += 1
 					py_pass_template += 'n'
 			i += 1
-
+		
 		temp = py_pass_template.encode("utf-8")
 		cdef char* template = temp
 		dynamic_binary_add_quick(self.parent, template, <DynamicType*>to_convert.parent.ptr)

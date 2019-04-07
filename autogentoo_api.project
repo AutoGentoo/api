@@ -28,11 +28,14 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=1
+current_page=4
 FILE_NAME_0=1370;Cython;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fautogentoo_api%2Fsmw_server.pxd;0;4
 FILE_NAME_1=411;Cython;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fautogentoo_api%2Fsmw_server.pyx;0;4
 FILE_NAME_2=262;Python;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fsetup.py;0;4
 FILE_NAME_3=81;Python;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fsmw_test.py;0;4
+FILE_NAME_4=2503;Cython;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fautogentoo_api%2Frequest.pyx;0;4
+FILE_NAME_5=1706;Cython;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Fautogentoo_api%2Frequest.pxd;0;4
+FILE_NAME_6=0;Python;0;EUTF-8;1;1;0;%2Fhome%2Fatuser%2Fgit%2Fautogentoo_api%2Ftest.py;0;4
 
 [VTE]
 last_dir=/home/atuser/git/autogentoo_api
