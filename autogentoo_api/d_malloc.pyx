@@ -150,14 +150,14 @@ cdef class Binary:
 		self.ptr = ptr
 		self.size = size
 
-	cdef str read_string (self):
+	cpdef str read_string (self):
 		if not self.inside():
 			raise MemoryError("Reading past edge of memory")
 		cdef char* out = <char*>(<void*>self.ptr + self.pos)
 		self.pos += strlen (out) + 1
 		return out.decode("utf-8")
 
-	cdef int read_int (self):
+	cpdef int read_int (self):
 		if not self.inside(sizeof (int)):
 			raise MemoryError("Reading past edge of memory")
 
@@ -221,7 +221,7 @@ cdef class Binary:
 	cdef inside (self, size_t next_size=0):
 		return not self.check_sentinels() and self.inside_size(next_size)
 
-	cpdef read_template (self, char* template):
+	cpdef read_template (self, char* template, top=True):
 		out = []
 
 		i = 0
@@ -236,10 +236,12 @@ cdef class Binary:
 				array_template = self.get_array_template(template[i:].decode("utf-8"))
 				temp_arr = []
 				for j in range (array_len):
-					temp_arr.append(self.read_template(array_template.encode("utf-8")))
+					temp_arr.append(self.read_template(array_template.encode("utf-8"), False))
 				out.append(temp_arr)
 				i += len(array_template)
 			i += 1
+		if len(out) == 1 and not top:
+			return out[0]
 		return out
 
 	cpdef void print_raw (self, align=25):

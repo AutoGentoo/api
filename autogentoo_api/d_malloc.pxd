@@ -23,13 +23,13 @@ cdef class Binary:
 	cdef DynamicBuffer buffer
 	
 	cdef void set_ptr(self, void* ptr, size_t size)
-	cdef str read_string (self)
-	cdef int read_int (self)
+	cpdef str read_string (self)
+	cpdef int read_int (self)
 	cdef skip_until (self, to_find)
 	cdef inside (self, size_t next_size=*)
 	cdef inside_size (self, size_t size=*)
 	cpdef add_sentinel (self, int sentinel)
 	cdef check_sentinels (self)
 	cdef str get_array_template(self, template_start)
-	cpdef read_template (self, char* template)
+	cpdef read_template (self, char* template, top=*)
 	cpdef void print_raw (self, align=*)
