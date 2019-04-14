@@ -16,6 +16,7 @@ req_bindings = {
 	"REQ_AUTH_ISSUE_TOK": <int>REQ_AUTH_ISSUE_TOK,
 	"REQ_AUTH_REFRESH_TOK": <int>REQ_AUTH_REFRESH_TOK,
 	"REQ_AUTH_REGISTER": <int>REQ_AUTH_REGISTER,
+	"REQ_JOB_STREAM": <int>REQ_JOB_STREAM,
 }
 
 request_args = {
@@ -28,7 +29,8 @@ request_args = {
 	REQ_SRV_REFRESH: [STRCT_AUTHORIZE],
 	REQ_AUTH_ISSUE_TOK: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_ISSUE_TOK],
 	REQ_AUTH_REFRESH_TOK: [STRCT_AUTHORIZE],
-	REQ_AUTH_REGISTER: [STRCT_AUTHORIZE, STRCT_ISSUE_TOK]
+	REQ_AUTH_REGISTER: [STRCT_AUTHORIZE, STRCT_ISSUE_TOK],
+	REQ_JOB_STREAM: [STRCT_AUTHORIZE, STRCT_HOST_SELECT, STRCT_JOB_SELECT]
 }
 
 request_structure_linkage = [
@@ -38,6 +40,7 @@ request_structure_linkage = [
 	"ss", # /* Host authorize */
 	"s", # /* Emerge arguments */
 	"ssi", # /* Issue Token */
+	"s", # /* Job select */
 ]
 
 cpdef RequestStruct = namedtuple('RequestStruct', 'struct_type args')
@@ -107,7 +110,7 @@ cdef class Socket:
 		else:
 			response_size = <size_t>socket_read(self.raw_socket, &response_ptr, 0)
 		if response_size <= 0:
-			raise ConnectionError("Failed to read response from server")
+			raise ConnectionError("Failed to read response from server (ssl = %s)" % self.ssl)
 		if raw:
 			return PyByteArray_FromStringAndSize(<char*>response_ptr, response_size)
 		
@@ -161,10 +164,12 @@ cpdef host_select(str hostname):
 	return RequestStruct(struct_type=STRCT_HOST_SELECT, args=[hostname])
 cpdef authorize(str user_id, str token):
 	return RequestStruct(struct_type=STRCT_AUTHORIZE, args=(user_id, token))
-cpdef emerge(str emerge):
-	return RequestStruct(struct_type=STRCT_EMERGE, args=[emerge])
+cpdef host_emerge(str emerge_str):
+	return RequestStruct(struct_type=STRCT_EMERGE, args=[emerge_str])
 cpdef issue_token(str user_id, str target_host, token_access_t access_level):
 	return RequestStruct(struct_type=STRCT_ISSUE_TOK, args=(user_id, target_host, access_level))
+cpdef job_select(str job_id):
+	return RequestStruct(struct_type=STRCT_JOB_SELECT, args=[job_id])
 
 cdef class Client:
 	def __init__(self, Address adr):

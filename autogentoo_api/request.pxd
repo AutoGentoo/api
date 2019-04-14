@@ -10,6 +10,7 @@ cdef extern from "<autogentoo/request_structure.h>":
 		STRCT_AUTHORIZE,
 		STRCT_EMERGE,
 		STRCT_ISSUE_TOK,
+		STRCT_JOB_SELECT,
 		
 		STRCT_MAX
 
@@ -32,6 +33,7 @@ cdef extern from "<autogentoo/request.h>":
 			REQ_AUTH_ISSUE_TOK,
 			REQ_AUTH_REFRESH_TOK,
 			REQ_AUTH_REGISTER,
+			REQ_JOB_STREAM,
 			
 			REQ_MAX
 
@@ -156,5 +158,6 @@ cpdef host_new(str arch, str profile, str hostname)
 cpdef host_edit(int request_type, str make_conf_var, str make_conf_val)
 cpdef host_select(str hostname)
 cpdef authorize(str user_id, str token)
-cpdef emerge(str emerge)
+cpdef host_emerge(str emerge_str)
 cpdef issue_token(str user_id, str target_host, token_access_t access_level)
+cpdef job_select(str job_id)

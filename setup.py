@@ -9,7 +9,7 @@ ex = [
 	"dynamic_binary",
 	"d_malloc",
 	"request",
-	"smw_server"
+	"stream"
 ]
 
 extensions = [

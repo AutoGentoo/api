@@ -4,15 +4,19 @@ from autogentoo_api.d_malloc import DynamicBuffer
 # k = d_malloc.DynamicBuffer(to_network=True)
 # k.append("ssisa(is)", ["hello", "world", 2, "goodbye", [(2, "ds"), (3, "dd"), (1, "36")]])
 
-#client = Client(Address(ip="localhost", port="9491"))
+client = Client(Address(ip="localhost", port="9491"))
 
 # username = input("username: ")
 # token = input("token: ")
-username = "autogentoo.org"
-token = "hP6Q5vNmyCvhBr48hqb9ZQKkhn9LaLF5"
+username = "atuser"
+token = "3UBBoCAxEmjBIpYCJ8z9A1jSPTlDBcK2"
 
 
-#print(client.request("REQ_SRV_REFRESH", [authorize(username, token)]))
+print(client.request("REQ_HOST_EMERGE", [
+	authorize(username, token),
+	host_select("3UBBoCAxEmjBIpY"),
+	host_emerge("portage")
+	]))
 
 #print(client.request("REQ_HOST_NEW", [
 #	authorize("kronos", ""),
@@ -20,7 +24,7 @@ token = "hP6Q5vNmyCvhBr48hqb9ZQKkhn9LaLF5"
 #]))
 
 #print(client.request("REQ_SRV_INFO", []))
-
+"""
 sock = Socket(Address(ip="/tmp/autogentoo_worker.sock", unix=True), ssl=False)
 
 worker_request_1 = DynamicBuffer(to_network=True)
@@ -40,3 +44,4 @@ res_bin.print_raw()
 template = res_bin.read_string()
 
 print(res_bin.read_template(template.encode('utf-8')))
+"""
